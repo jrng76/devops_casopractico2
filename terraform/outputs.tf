@@ -5,3 +5,8 @@ output "resource_group_id" {
 output "vm_id" {
   value = azurerm_linux_virtual_machine.vm.id
 }
+
+output "sg_id" {
+  value = azurerm_network_security_group.sg.id
+}
+
