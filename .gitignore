@@ -1,0 +1,7 @@
+terraform/.terraform/*
+terraform/.terraform
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate.backup
+terraform/terraform.tfstate
+terraform/MyPlan
+terraform/id_rsa_vm
