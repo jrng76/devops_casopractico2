@@ -4,6 +4,15 @@ resource "azurerm_resource_group" "rg" {
   location = var.location_name
 }
 
+# Creación del container registry
+resource "azurerm_container_registry" "acr" {
+  name                = var.registry_name
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  sku                 = var.registry_sku
+  admin_enabled       = true
+}
+
 # Creacaión de la red virtual
 resource "azurerm_virtual_network" "vnet" {
   name                = var.network_name
@@ -91,14 +100,14 @@ resource "azurerm_linux_virtual_machine" "vm" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   size                = "Standard_F2"
-  admin_username      = "azureuser"
+  admin_username      = var.ssh_user
   computer_name       = "vmubu01"
   network_interface_ids = [
     azurerm_network_interface.nic.id,
   ]
 
   admin_ssh_key {
-    username   = "azureuser"
+    username   = var.ssh_user
     public_key = tls_private_key.claves_ssh.public_key_openssh
     #public_key = file("~/.ssh/id_rsa.pub")
   }
