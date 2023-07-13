@@ -94,6 +94,33 @@ resource "azurerm_network_interface_security_group_association" "nicgs"{
   network_security_group_id = azurerm_network_security_group.sg.id
 }
 
+# Creando el AKS
+resource "azurerm_kubernetes_cluster" "aksjrng76"{
+  name                = "aks-aksjrng76"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  dns_prefix          = "jrng76"
+
+  default_node_pool {
+    name = "default"
+    node_count =1
+    vm_size = "Standard_D2_V2"
+  }
+
+  identity {
+    type = "SystemAssigned"  
+  }
+
+}
+
+# Vinculando el Acr al Aks
+resource "azurerm_role_assignment" "acraks" {
+  principal_id                     = azurerm_kubernetes_cluster.aksjrng76.kubelet_identity[0].object_id
+  role_definition_name             = "AcrPull"
+  scope                            = azurerm_container_registry.acr.id
+  skip_service_principal_aad_check = true
+}
+
 # Creando la maquina virtual 
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm1"
