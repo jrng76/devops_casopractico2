@@ -5,4 +5,4 @@ terraform/terraform.tfstate.backup
 terraform/MyPlan
 terraform/id_rsa_vm
 terraform/terraform.tfstate
-ansible/*
+ansible/notas.txt

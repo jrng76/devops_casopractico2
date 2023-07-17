@@ -1,0 +1,74 @@
+---
+- name: 'Playbook podman'
+  hosts: all
+  remote_user: azureuser
+  become: true
+  vars:
+    ansible_ssh_private_key_file: "./id_rsa_vm"
+  vars_files:
+    - vars.yaml
+  tasks:
+  - name: '- Instalación podman'
+    yum:
+      name: podman
+      state: latest
+
+  - name: "- Copia el fichero Containerfile"
+    ansible.builtin.copy:
+      src: ./Containerfile
+      dest: ./Containerfile
+
+  - name: "- Copia el fichero index.html"
+    ansible.builtin.copy:
+      src: ./index.html
+      dest: ./index.html
+
+#  - name: "- Construir contenedor ngnix en local"
+#    containers.podman.podman_image:
+#      name: jrng76nginx
+#      path: ./
+#      build:
+#        file: ./Containerfile
+
+  - name: 'Creo el registro de login por defecto en /etc/containers/auth.json'
+    containers.podman.podman_login:
+      username: "{{ acr_user }}"
+      password: "{{ acr_pass }}"
+      registry: "{{ acr_server }}"
+      authfile: "/etc/containers/auth.json"
+
+  - name: "- Construyo la imagen y la subo al acr de Azure usando el registro de login auth.json"
+    containers.podman.podman_image:
+      name: jrng76nginx
+      path: ./
+      build:
+        file: ./Containerfile
+      push: true
+      auth_file: "/etc/containers/auth.json"
+      push_args:
+        dest: "{{ acr_server }}"
+
+  - name: "Borro imagen nginx que ya es necesaria"
+    containers.podman.podman_image:
+      name: "docker.io/library/nginx"
+      state: absent
+
+  - name: "Borro imagen jrng76nginx local que ya es necesaria"
+    containers.podman.podman_image:
+      name: "localhost/jrng76nginx"
+      state: absent
+
+  - name: "- Login con el acr de Azure"
+    containers.podman.podman_login:
+      username: "{{ acr_user }}"
+      password: "{{ acr_pass }}"
+      registry: "{{ acr_server }}"
+
+  - name: "Inicio el contenedor de la imagen de acr de azure"
+    containers.podman.podman_container:
+      name: containernginx
+      image: "jrng76.azurecr.io/jrng76nginx"
+      state: started
+      ports: 
+        - "80:80"
+

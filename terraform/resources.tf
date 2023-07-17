@@ -56,6 +56,18 @@ resource "azurerm_network_security_group" "sg"{
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+  
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 1002
+    direction                  ="Inbound"
+    access                     ="Allow"
+    protocol                   ="Tcp"
+    source_port_range          ="*"
+    destination_port_range     ="80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
   tags={
     environment ="Test"
   }
@@ -95,31 +107,30 @@ resource "azurerm_network_interface_security_group_association" "nicgs"{
 }
 
 # Creando el AKS
-resource "azurerm_kubernetes_cluster" "aksjrng76"{
-  name                = "aks-aksjrng76"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  dns_prefix          = "jrng76"
+#resource "azurerm_kubernetes_cluster" "aksjrng76"{
+#  name                = "aks-aksjrng76"
+#  location            = azurerm_resource_group.rg.location
+#  resource_group_name = azurerm_resource_group.rg.name
+#  dns_prefix          = "jrng76"
 
-  default_node_pool {
-    name = "default"
-    node_count =1
-    vm_size = "Standard_D2_V2"
-  }
+#  default_node_pool {
+#    name = "default"
+#    node_count =1
+#    vm_size = "Standard_D2_V2"
+#  }
 
-  identity {
-    type = "SystemAssigned"  
-  }
-
-}
+#  identity {
+#    type = "SystemAssigned"  
+#  }
+#}
 
 # Vinculando el Acr al Aks
-resource "azurerm_role_assignment" "acraks" {
-  principal_id                     = azurerm_kubernetes_cluster.aksjrng76.kubelet_identity[0].object_id
-  role_definition_name             = "AcrPull"
-  scope                            = azurerm_container_registry.acr.id
-  skip_service_principal_aad_check = true
-}
+#resource "azurerm_role_assignment" "acraks" {
+#  principal_id                     = azurerm_kubernetes_cluster.aksjrng76.kubelet_identity[0].object_id
+#  role_definition_name             = "AcrPull"
+#  scope                            = azurerm_container_registry.acr.id
+#  skip_service_principal_aad_check = true
+#}
 
 # Creando la maquina virtual 
 resource "azurerm_linux_virtual_machine" "vm" {
@@ -128,7 +139,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   location            = azurerm_resource_group.rg.location
   size                = "Standard_F2"
   admin_username      = var.ssh_user
-  computer_name       = "vmubu01"
+  computer_name       = "vmcentos01"
   network_interface_ids = [
     azurerm_network_interface.nic.id,
   ]
@@ -145,9 +156,9 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 
   source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    publisher = "OpenLogic"
+    offer     = "CentOS"
+    sku       = "7.5"
     version   = "latest"
   }
 }
