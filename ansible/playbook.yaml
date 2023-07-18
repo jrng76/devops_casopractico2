@@ -23,12 +23,15 @@
       src: ./index.html
       dest: ./index.html
 
-#  - name: "- Construir contenedor ngnix en local"
-#    containers.podman.podman_image:
-#      name: jrng76nginx
-#      path: ./
-#      build:
-#        file: ./Containerfile
+  - name: "- Copia el fichero .htpassword"
+    ansible.builtin.copy:
+      src: ./.htpassword
+      dest: ./.htpassword
+
+  - name: "- Copia el fichero default.conf"
+    ansible.builtin.copy:
+      src: ./default.conf
+      dest: ./default.conf
 
   - name: 'Creo el registro de login por defecto en /etc/containers/auth.json'
     containers.podman.podman_login:
@@ -48,12 +51,12 @@
       push_args:
         dest: "{{ acr_server }}"
 
-  - name: "Borro imagen nginx que ya es necesaria"
+  - name: "Borro imagen nginx que ya no es necesaria"
     containers.podman.podman_image:
       name: "docker.io/library/nginx"
       state: absent
 
-  - name: "Borro imagen jrng76nginx local que ya es necesaria"
+  - name: "Borro imagen jrng76nginx local que ya no es necesaria"
     containers.podman.podman_image:
       name: "localhost/jrng76nginx"
       state: absent
@@ -71,4 +74,3 @@
       state: started
       ports: 
         - "80:80"
-
