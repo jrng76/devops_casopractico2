@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ aplicacion.phpmyadmin.nombre }}"
+  namespace: "{{ k8s_namespace }}"
+spec:
+  replicas: {{ aplicacion.phpmyadmin.replicas }}
+  selector:
+    matchLabels:
+      app: "{{ aplicacion.phpmyadmin.nombre }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ aplicacion.phpmyadmin.nombre }}"
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: pvc-mysql-storage
+      containers:
+      - name: "{{ aplicacion.phpmyadmin.nombre }}"
+        image: "{{ aplicacion.phpmyadmin.imagen }}"
+        resources:
+          requests:
+            cpu: "{{ aplicacion.phpmyadmin.recursos.cpu }}"
+            memory: "{{ aplicacion.phpmyadmin.recursos.memoria }}"
+          limits:
+            cpu: "{{ aplicacion.phpmyadmin.limites.cpu }}"
+            memory: "{{ aplicacion.phpmyadmin.limites.memoria }}"
+        ports:
+        - containerPort: {{ aplicacion.phpmyadmin.puerto }}
+          name: "http-phpmyadmin"
+      - name: "{{ aplicacion.mysql.nombre }}"
+        image: "{{ aplicacion.mysql.imagen }}"
+        resources:
+          requests:
+            cpu: "{{ aplicacion.mysql.recursos.cpu }}"
+            memory: "{{ aplicacion.mysql.recursos.memoria }}"
+          limits:
+            cpu: "{{ aplicacion.mysql.limites.cpu }}"
+            memory: "{{ aplicacion.mysql.limites.memoria }}"
+        ports:
+        - containerPort: {{ aplicacion.mysql.puerto }}
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "toor"
+        - name: MYSQL_USER
+          value: "usermysql"
+        - name: MYSQL_PASSWORD
+          value: "mypassword" 
+        volumeMounts:
+        - mountPath: "/var/lib/mysql"
+          name: mysql-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ aplicacion.phpmyadmin.nombre }}"
+  namespace: "{{ k8s_namespace }}"
+spec:
+  type: LoadBalancer
+  ports:
+  - port: {{ aplicacion.phpmyadmin.puerto }}
+  selector:
+    app: "{{ aplicacion.phpmyadmin.nombre }}"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-mysql-storage
+  namespace: "{{ k8s_namespace }}"
+spec:
+  storageClassName: managed-csi
+  resources:
+    requests:
+      storage: 2Gi
+  accessModes:
+  - ReadWriteOnce
+
+

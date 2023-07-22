@@ -1,4 +1,4 @@
-# Creacion del resource_group
+# Creación del resource_group
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.location_name
@@ -13,7 +13,7 @@ resource "azurerm_container_registry" "acr" {
   admin_enabled       = true
 }
 
-# Creacaión de la red virtual
+# Creación de la red virtual
 resource "azurerm_virtual_network" "vnet" {
   name                = var.network_name
   address_space       = ["10.0.0.0/16"]
@@ -21,7 +21,7 @@ resource "azurerm_virtual_network" "vnet" {
   resource_group_name = azurerm_resource_group.rg.name
 }
 
-# Creacion de la subred
+# Creación de la subred
 resource "azurerm_subnet" "subnet" {
   name                 = var.subnet_name
   resource_group_name  = azurerm_resource_group.rg.name
@@ -39,7 +39,7 @@ resource "azurerm_public_ip" "pip" {
   domain_name_label   = "domaintest"  
 }
 
-# Creando el security group
+# Creación del security group
 resource "azurerm_network_security_group" "sg"{
   name                = "vsg"
   location            = azurerm_resource_group.rg.location
@@ -68,6 +68,19 @@ resource "azurerm_network_security_group" "sg"{
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name                       = "HTTPS"
+    priority                   = 1003
+    direction                  ="Inbound"
+    access                     ="Allow"
+    protocol                   ="Tcp"
+    source_port_range          ="*"
+    destination_port_range     ="443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
   tags={
     environment ="Test"
   }
@@ -79,7 +92,7 @@ resource "azurerm_subnet_network_security_group_association" "ngs-link" {
   network_security_group_id = azurerm_network_security_group.sg.id
 }
 
-# Creando el interface de red y asignandole la subred y la ip pública
+# Creación del interface de red y asignandole la subred y la ip pública
 resource "azurerm_network_interface" "nic" {
   name                = "vnic"
   location            = azurerm_resource_group.rg.location
@@ -106,33 +119,33 @@ resource "azurerm_network_interface_security_group_association" "nicgs"{
   network_security_group_id = azurerm_network_security_group.sg.id
 }
 
-# Creando el AKS
-#resource "azurerm_kubernetes_cluster" "aksjrng76"{
-#  name                = "aks-aksjrng76"
-#  location            = azurerm_resource_group.rg.location
-#  resource_group_name = azurerm_resource_group.rg.name
-#  dns_prefix          = "jrng76"
+# Creación del AKS
+resource "azurerm_kubernetes_cluster" "aksjrng76"{
+  name                = "aks-aksjrng76"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  dns_prefix          = "jrng76"
 
-#  default_node_pool {
-#    name = "default"
-#    node_count =1
-#    vm_size = "Standard_D2_V2"
-#  }
+  default_node_pool {
+    name = "default"
+    node_count =1
+    vm_size = "Standard_DS2_V2"
+  }
 
-#  identity {
-#    type = "SystemAssigned"  
-#  }
-#}
+  identity {
+    type = "SystemAssigned"  
+  }
+}
 
 # Vinculando el Acr al Aks
-#resource "azurerm_role_assignment" "acraks" {
-#  principal_id                     = azurerm_kubernetes_cluster.aksjrng76.kubelet_identity[0].object_id
-#  role_definition_name             = "AcrPull"
-#  scope                            = azurerm_container_registry.acr.id
-#  skip_service_principal_aad_check = true
-#}
+resource "azurerm_role_assignment" "acraks" {
+  principal_id                     = azurerm_kubernetes_cluster.aksjrng76.kubelet_identity[0].object_id
+  role_definition_name             = "AcrPull"
+  scope                            = azurerm_container_registry.acr.id
+  skip_service_principal_aad_check = true
+}
 
-# Creando la maquina virtual 
+# Creación de la maquina virtual 
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm1"
   resource_group_name = azurerm_resource_group.rg.name
@@ -155,10 +168,16 @@ resource "azurerm_linux_virtual_machine" "vm" {
     storage_account_type = "Standard_LRS"
   }
 
+  plan {
+    name      = "centos-8-stream-free"
+    product   = "centos-8-stream-free"
+    publisher = "cognosys"
+  }
+  
   source_image_reference {
-    publisher = "OpenLogic"
-    offer     = "CentOS"
-    sku       = "7.5"
-    version   = "latest"
+    publisher = "cognosys"
+    offer     = "centos-8-stream-free"
+    sku       = "centos-8-stream-free"
+    version   = "22.03.28"
   }
 }

@@ -18,4 +18,7 @@ if [ $status -eq 0 ]; then
     echo "acr_user: $(terraform output acr_admin_user)" > ../ansible/vars.yaml
     echo "acr_pass: $(terraform output acr_admin_pass)" >> ../ansible/vars.yaml
     echo "acr_server: $(terraform output acr_login_server)" >> ../ansible/vars.yaml
+    echo "acr_server_nginx: $(terraform output acr_login_server)/nginx" | sed -r 's/["]//g' >> ../ansible/vars.yaml
+    echo "acr_server_mysql: $(terraform output acr_login_server)/mysql" | sed -r 's/["]//g' >> ../ansible/vars.yaml
+    echo "acr_server_phpmyadmin: $(terraform output acr_login_server)/phpmyadmin" | sed -r 's/["]//g' >> ../ansible/vars.yaml
 fi

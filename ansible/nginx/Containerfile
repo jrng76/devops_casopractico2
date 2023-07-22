@@ -1,0 +1,6 @@
+FROM docker.io/library/nginx:latest
+COPY ./nginx/index.html /usr/share/nginx/html/
+COPY ./nginx/.htpassword /usr/share/nginx/html/
+COPY ./nginx/default.conf /etc/nginx/conf.d/
+COPY ./nginx/cert.crt /etc/nginx/certs/
+COPY ./nginx/privkey.pem /etc/nginx/certs/

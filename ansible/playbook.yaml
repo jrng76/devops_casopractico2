@@ -8,69 +8,184 @@
   vars_files:
     - vars.yaml
   tasks:
-  - name: '- Instalación podman'
+  - name: '- Instalación de podman'
     yum:
       name: podman
       state: latest
 
-  - name: "- Copia el fichero Containerfile"
-    ansible.builtin.copy:
-      src: ./Containerfile
-      dest: ./Containerfile
+  - name: '- Instalación de httpd-tools'
+    yum:
+      name: httpd-tools
+      state: latest
 
-  - name: "- Copia el fichero index.html"
-    ansible.builtin.copy:
-      src: ./index.html
-      dest: ./index.html
+  - name: '- Instalo passlib python package (necesario para community.general.htpasswd)'
+    ansible.builtin.pip:
+      name: passlib
 
-  - name: "- Copia el fichero .htpassword"
-    ansible.builtin.copy:
-      src: ./.htpassword
-      dest: ./.htpassword
+  - name: '- Creo el directorio ngnix'
+    ansible.builtin.file:
+      path: ./nginx
+      state: directory
 
-  - name: "- Copia el fichero default.conf"
+  - name: '- Copia el fichero Containerfile al directorio nginx'
     ansible.builtin.copy:
-      src: ./default.conf
-      dest: ./default.conf
+      src: ./nginx/Containerfile
+      dest: ./nginx/Containerfile
 
-  - name: 'Creo el registro de login por defecto en /etc/containers/auth.json'
+  - name: '- Copia el fichero index.html al directorio nginx'
+    ansible.builtin.copy:
+      src: ./nginx/index.html
+      dest: ./nginx/index.html
+
+  - name: '- Copia el fichero default.conf al directorio nginx'
+    ansible.builtin.copy:
+      src: ./nginx/default.conf
+      dest: ./nginx/default.conf
+
+  - name: '- Creo el fichero .htpassword en el directorio nginx'
+    community.general.htpasswd:
+      path: ./nginx/.htpassword
+      name: admin
+      password: 'mypassword'
+
+  - name: '- Genero la clave privada con OpenSSL private key con los valores por defecto (4096 bits, RSA)'
+    community.crypto.openssl_privatekey:
+      path: ./nginx/privkey.pem
+
+  - name: '- Genero el Certificate Signing Request (csr) para nginx'
+    community.crypto.openssl_csr:
+      path: ./nginx/jrng76.com.csr
+      privatekey_path: ./nginx/privkey.pem
+      country_name: ES
+      organization_name: jrng76
+      email_address: jrng76@gmail.com
+      common_name: www.jrng76.com
+
+  - name: '- Genero el certificado autofirmado (.crt) para nginx'
+    community.crypto.x509_certificate:
+      path: ./nginx/cert.crt
+      privatekey_path: ./nginx/privkey.pem
+      csr_path: ./nginx/jrng76.com.csr
+      provider: selfsigned
+
+  - name: '- Creo el directorio phpmyadmin'
+    ansible.builtin.file:
+      path: ./phpmyadmin
+      state: directory
+
+  - name: '- Copia el fichero Containerfile en el directorio phpmyadmin'
+    ansible.builtin.copy:
+      src: ./phpmyadmin/Containerfile
+      dest: ./phpmyadmin/Containerfile
+
+  - name: '- Pull de la imagen de MySQL'
+    containers.podman.podman_image:
+      name: docker.io/library/mysql:latest 
+
+  - name: '- Cambio el tag a la imagen de MySQl'
+    containers.podman.podman_tag:
+      image: docker.io/library/mysql:latest
+      target_names:
+        - jrng76mysql:casopractico2 
+
+  - name: '- Creo el registro de login por defecto en /etc/containers/auth.json'
     containers.podman.podman_login:
       username: "{{ acr_user }}"
       password: "{{ acr_pass }}"
       registry: "{{ acr_server }}"
       authfile: "/etc/containers/auth.json"
 
-  - name: "- Construyo la imagen y la subo al acr de Azure usando el registro de login auth.json"
+  - name: '- Construyo la imagen de nginx y la subo al acr de Azure usando el registro de login auth.json'
     containers.podman.podman_image:
       name: jrng76nginx
+      tag: "casopractico2"
       path: ./
       build:
-        file: ./Containerfile
+        file: ./nginx/Containerfile
       push: true
       auth_file: "/etc/containers/auth.json"
       push_args:
-        dest: "{{ acr_server }}"
+        dest: "{{ acr_server_nginx }}"
 
-  - name: "Borro imagen nginx que ya no es necesaria"
+  - name: '- Construyo la imagen de mysql y la subo al acr de Azure usando el registro de login auth.json'
+    containers.podman.podman_image:
+      name: jrng76mysql
+      tag: "casopractico2"
+      push: true
+      auth_file: "/etc/containers/auth.json"
+      push_args:
+        dest: "{{ acr_server_mysql }}"
+
+  - name: '- Construyo la imagen de phpmyadmin y la subo al acr de Azure usando el registro de login auth.json'
+    containers.podman.podman_image:
+      name: jrng76phpmyadmin
+      tag: "casopractico2"
+      path: ./
+      build:
+        file: ./phpmyadmin/Containerfile
+      push: true
+      auth_file: "/etc/containers/auth.json"
+      push_args:
+        dest: "{{ acr_server_phpmyadmin }}"
+
+  - name: '- Borro imagen nginx que ya no es necesaria'
     containers.podman.podman_image:
       name: "docker.io/library/nginx"
       state: absent
 
-  - name: "Borro imagen jrng76nginx local que ya no es necesaria"
+  - name: '- Borro imagen jrng76nginx local que ya no es necesaria'
     containers.podman.podman_image:
       name: "localhost/jrng76nginx"
+      tag: "casopractico2"
       state: absent
 
-  - name: "- Login con el acr de Azure"
+  - name: '- Borro imagen mysql que ya no es necesaria'
+    containers.podman.podman_image:
+      name: "docker.io/library/mysql"
+      state: absent
+
+  - name: '- Borro imagen jrng76mysql local que ya no es necesaria'
+    containers.podman.podman_image:
+      name: "localhost/jrng76mysql"
+      tag: "casopractico2"
+      state: absent
+
+  - name: '- Borro imagen phpmyadmin que ya no es necesaria'
+    containers.podman.podman_image:
+      name: "docker.io/library/phpmyadmin"
+      state: absent
+
+  - name: '- Borro imagen jrng76phpmyadmin local que ya no es necesaria'
+    containers.podman.podman_image:
+      name: "localhost/jrng76phpmyadmin"
+      tag: "casopractico2"
+      state: absent
+
+  - name: '- Login con el acr de Azure'
     containers.podman.podman_login:
       username: "{{ acr_user }}"
       password: "{{ acr_pass }}"
       registry: "{{ acr_server }}"
 
-  - name: "Inicio el contenedor de la imagen de acr de azure"
+  - name: '- Creo el contenedor de la imagen de acr de azure'
     containers.podman.podman_container:
       name: containernginx
-      image: "jrng76.azurecr.io/jrng76nginx"
-      state: started
+      image: "jrng76.azurecr.io/nginx/jrng76nginx:casopractico2"
+      state: created
       ports: 
-        - "80:80"
+        - "443:443"
+      generate_systemd:
+        restart_policy: "always"
+  
+  - name: '- Genero el fichero unidad systemd para el contenedor containernginx'
+    containers.podman.podman_generate_systemd:
+      name: containernginx
+      new: true
+      no_header: true
+      dest: /etc/systemd/system
+
+  - name: '- Activa e inicia el servicio container-containernginx.service'
+    ansible.builtin.systemd:
+      name: container-containernginx.service
+      state: started
+      enabled: true

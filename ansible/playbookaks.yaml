@@ -1,0 +1,23 @@
+---
+- name: 'Playbook de aks'
+  hosts: localhost
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+    - varsaks.yaml
+  tasks:
+
+    - name: '- Definir los objectos deployment y servicios'
+      template:
+        src: templates/dual.j2
+        dest: "{{ directorio_trabajo }}/{{ aplicacion.definicion }}"
+
+    - name: '- Crear el namespace de trabajo'
+      kubernetes.core.k8s:
+        kind: Namespace
+        name: "{{ k8s_namespace }}"
+
+    - name: '- Crear Deployments y servicios de la aplicación'
+      kubernetes.core.k8s:
+        state: present
+        template: "{{ directorio_trabajo }}/{{ aplicacion.definicion }}"

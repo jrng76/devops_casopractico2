@@ -29,6 +29,9 @@ Para facilitar el despliegue con **terraform** se ha creado un script llamado ex
     echo "acr_user: $(terraform output acr_admin_user)" > ../ansible/vars.yaml
     echo "acr_pass: $(terraform output acr_admin_pass)" >> ../ansible/vars.yaml
     echo "acr_server: $(terraform output acr_login_server)" >> ../ansible/vars.yaml
+    echo "acr_server_nginx: $(terraform output acr_login_server)/nginx" >> ../ansible/vars.yaml
+    echo "acr_server_mysql: $(terraform output acr_login_server)/mysql" >> ../ansible/vars.yaml
+    echo "acr_server_phpmyadmin: $(terraform output acr_login_server)/phpmyadmin" >> ../ansible/vars.yaml
     ```
 ## Fichero main.tf
 Fichero de configuración de terraform.
@@ -45,8 +48,8 @@ El fichero resources.tf contiene la infraestructura a crear en Azure:
     - Security rule port 80.
   - Creación de par de claves ssh.
   - Creación de una maquina virtual.
-    - Dos nucleos y 4 GB de Ram.
-    - S.O. CentOs 7.5
+    - 2 cpu virtuales y 4 GiB de Ram.
+    - S.O. CentOs 8
 
 ## Fichero variables.tf
 En el fichero variables.tf están definidas las variables.
@@ -60,4 +63,23 @@ En el fichero variables.tf están definidas las variables.
 
 ## Fichero outputs.tf
 Fichero con las variables de salida:
-- resource_group_id.
+- resource_group_id. Identificador del grupo de recursos.
+- vm_id. Identificador de la maquina virtual creada.
+- sg_id. Identificador del grupo de seguridad.
+- public_ip_address. Dirección Ip pública de acceso a la maquina virtual.
+- tls_private_key. Clave privada.
+- acr_login_server. Logín de servidor acr.
+- acr_admin_user. Usuario administrador del acr.
+- acr_admin_pass. Contraseña del usuario administrador del acr.
+- ssh_user. Usuario para la conexión con ssh.
+- client_certificate. Certificado cliente del AKS.
+- kube_config. Configuración del AKS.
+
+## Crear el certificado autofirmado (opcional).
+Comandos necesarios para crear nuestro propio certificado sino se quiere usar el creado de manera automática por terraform.
+
+    ```  
+    openssl genrsa -out privkey.pem 2048
+    openssl req -new -key privkey.pem -out cert.csr
+    openssl x509 -req -days 10000 -in cert.csr -signkey privkey.pem -out cert.crt
+    ```

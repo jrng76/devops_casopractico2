@@ -1,3 +1,6 @@
 acr_user: "jrng76"
-acr_pass: "a8VDSQ8/x0AoA/ag76oXpp6m6Q4BqmqeQ0MbLKhRLF+ACRDEOcak"
+acr_pass: "4pC9Ep/Z9yIpJqDdXaRoODAXTykdqetTvcIlB8XjNW+ACRAClwl5"
 acr_server: "jrng76.azurecr.io"
+acr_server_nginx: jrng76.azurecr.io/nginx
+acr_server_mysql: jrng76.azurecr.io/mysql
+acr_server_phpmyadmin: jrng76.azurecr.io/phpmyadmin

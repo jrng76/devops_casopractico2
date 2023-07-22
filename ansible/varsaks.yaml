@@ -1,0 +1,26 @@
+k8s_namespace: "jrng76namespace"
+directorio_trabajo: "/tmp"
+aplicacion:
+  definicion: "deploymentsandservices.yaml"
+  phpmyadmin:
+    nombre: jrng76phpmyadmin
+    imagen: jrng76.azurecr.io/phpmyadmin/jrng76phpmyadmin:casopractico2
+    replicas: 1
+    recursos:
+      cpu: 100m
+      memoria: 256Mi
+    limites:
+      cpu: 250m
+      memoria: 512Mi
+    puerto: 80
+  mysql:
+    nombre: jrng76mysql
+    imagen: jrng76.azurecr.io/mysql/jrng76mysql:casopractico2
+    replicas: 1
+    recursos:
+      cpu: 150m
+      memoria: 512Mi
+    limites:
+      cpu: 250m
+      memoria: 2048Mi
+    puerto: 3306
