@@ -1,6 +1,6 @@
-#Caso práctico número 2 - Curso DevOps
+# Caso práctico número 2 - Curso DevOps
 
-##Descripción de la actividad
+## Descripción de la actividad
 
  El caso práctico 2 consiste en desplegar los siguientes elementos:
 

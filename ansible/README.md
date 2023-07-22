@@ -5,16 +5,16 @@ Al ejecutar el script de la parte de **terraform**, generará de manera automát
 
 ### Script deploy.sh
 El script ejecuta en este orden lo siguiente:
-- El playbook llamado playbook.yaml
-```
-ansible-playbook -i inventary **playbook.yaml**
+- El playbook llamado **playbook.yaml**
+```bash
+ansible-playbook -i inventary playbook.yaml
 ```
 - **az aks get-credentials** para obtener las credenciales de acceso al AKS.
-```
+```bash
 az aks get-credentials --resource-group rg-casopractico2TF --name aks-aksjrng76
 ```
 - El playbook llamado **playbookaks.yaml**
-```
+```bash
 ansible-playbook playbookaks.yaml
 ```
 
