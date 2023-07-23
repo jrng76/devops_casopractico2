@@ -20,6 +20,8 @@ Con **terraform** se creará la siguiente infraestructura en Azure:
 - Security Group.
   - Security rule port 22.
   - Security rule port 80.
+  - Security rule port 443.
+- Network Interface.
 - Una maquina virtual.
     - 2 cpu virtuales y 4 GiB de Ram.
     - Sistema Operativo: CentOS 8

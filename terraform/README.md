@@ -4,7 +4,7 @@
 Para facilitar el despliegue con **terraform** se ha creado un script llamado execterraform.sh que realiza las siguientes acciones:
   - Creación del plan llamado 'MyPlan'.
     ```bash  
-    terraform apply "MyPlan"
+    terraform plan -out "MyPlan"
     ```
   - Aplicar el plan construido para crear la infraestructura.
     ```bash  
@@ -34,8 +34,24 @@ Para facilitar el despliegue con **terraform** se ha creado un script llamado ex
     echo "acr_server_phpmyadmin: $(terraform output acr_login_server)/phpmyadmin" | sed -r 's/["]//g' >> ../ansible/vars.yaml
     ```
 ## Fichero main.tf
-Fichero de configuración de terraform.
+Fichero de configuración del proveedor de Azure para terraform.
+```bash
+# Configure the Azure provider
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.10.0"
+    }
+  }
 
+  required_version = ">= 1.1.0"
+}
+
+provider "azurerm" {
+  features {}
+}
+```
 ## Fichero resources.tf
 El fichero resources.tf contiene la infraestructura a crear en Azure:
   - Resource Group.
@@ -46,12 +62,16 @@ El fichero resources.tf contiene la infraestructura a crear en Azure:
   - Security Group.
     - Security rule port 22.
     - Security rule port 80.
+    - Security rule port 443
+  - Asociar a la Subnet el Security Group.
+  - Network Interface.
   - Creación de par de claves ssh.
-  - Creación de una maquina virtual.
+  - Creación de una máquina virtual.
     - 2 cpu virtuales y 4 GiB de Ram.
     - S.O. CentOs 8
-  - Azure Container Registry (ACR). Como repositorio de las imagenes que se usarán en la solución.
+  - Azure Container Registry (ACR). Como repositorio de las imágenes que se usarán en la solución.
   - Azure Kubernetes Service (AKS).
+  - Vincular el ACR al AKS para que tenga acceso a las imágenes del repositorio.
 
 ## Fichero variables.tf
 En el fichero variables.tf están definidas las variables.
@@ -66,9 +86,9 @@ En el fichero variables.tf están definidas las variables.
 ## Fichero outputs.tf
 Fichero con las variables de salida:
 - resource_group_id. Identificador del grupo de recursos.
-- vm_id. Identificador de la maquina virtual creada.
+- vm_id. Identificador de la máquina virtual creada.
 - sg_id. Identificador del grupo de seguridad.
-- public_ip_address. Dirección Ip pública de acceso a la maquina virtual.
+- public_ip_address. Dirección Ip pública de acceso a la máquina virtual.
 - tls_private_key. Clave privada.
 - acr_login_server. Logín de servidor acr.
 - acr_admin_user. Usuario administrador del acr.
